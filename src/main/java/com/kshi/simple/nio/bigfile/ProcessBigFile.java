@@ -1,34 +1,51 @@
 package com.kshi.simple.nio.bigfile;
 
-import com.sun.deploy.util.StringUtils;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.Channel;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.Scanner;
 
 public class ProcessBigFile {
     private final static int length = 0x8000000; // 128 Mb
 
     public static void main(String[] args) {
+        String filepath = getFilepathFromClasspath("ProcessBigFile.txt");
+        processBigFileByLine(filepath, "utf-8");
 
-        if (test()) return;
 
-        FileChannel channels;
+    }
+
+    private static String getFilepathFromClasspath(String filename) {
+        if (null == filename || filename.trim().equals("")) {
+            throw new IllegalArgumentException("File name can't be " + filename == null ? "null" : "empty");
+        }
+        return ProcessBigFile.class.getClassLoader().getResource(filename).getFile();
+
+    }
+
+    private static void processBigFileByLine(String filepath, String charset) {
+        int bufSize = 1024 * 1024 * 5;
+        FileChannel fileChannel;
+        ByteBuffer byteBuffer = ByteBuffer.allocate(bufSize);
+//        ByteBuffer.allocateDirect()
+
         try {
-            channels = new RandomAccessFile(new File(ProcessBigFile.class.getClassLoader().getResource("ProcessBigFile.txt").getFile()), "rw").getChannel();
-            MappedByteBuffer mappedByteBuffer = channels.map(FileChannel.MapMode.READ_WRITE, 0, length);
-            for (int i = 0; i < length; i++) {
-                mappedByteBuffer.put((byte) 'a');
+            File file = new File(filepath);
+            if (!file.exists()) {
+                throw new IllegalArgumentException("file is not exist");
             }
-            System.out.println("writing finished");
+            fileChannel = new RandomAccessFile(file, "rw").getChannel();
 
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            while (fileChannel.read(byteBuffer) != -1) {
+                int size = byteBuffer.position();
+                byteBuffer.rewind();
+                byteBuffer.array();
+
+                //https://www.cnblogs.com/jpfss/p/8991385.html
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -36,19 +53,5 @@ public class ProcessBigFile {
 
     }
 
-    public static boolean test() {
-        System.out.println(ProcessBigFile.class.getClassLoader().getResource("ProcessBigFile.txt").getFile());
-        FileChannel channels;
-        try {
-            channels = new RandomAccessFile(new File(ProcessBigFile.class.getClassLoader().getResource("ProcessBigFile.txt").getFile()), "rw").getChannel();
-            MappedByteBuffer mappedByteBuffer = channels.map(FileChannel.MapMode.READ_WRITE, 0, length);
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return true;
-    }
 
 }

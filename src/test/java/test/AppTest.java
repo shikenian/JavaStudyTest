@@ -17,4 +17,12 @@ public class AppTest
     {
         assertTrue( true );
     }
+
+    @Test
+    public void testCharset(){
+        char LF = '\r';
+        char CR = '\n';
+        System.out.println((int)LF);
+        System.out.println((int)CR);
+    }
 }
